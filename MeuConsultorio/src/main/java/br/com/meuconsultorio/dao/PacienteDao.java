@@ -4,28 +4,29 @@ import br.com.meuconsultorio.infra.ConexaoFactory;
 import br.com.meuconsultorio.model.Paciente;
 
 import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
 public class PacienteDao {
 
-    //METODO PARA CRIAR A TABELA NO BANCO (SÓ RODA UMA VEZ)
+    // 1. CRIA A TABELA
     public void criarTabela() {
         String sql = """
                 CREATE TABLE IF NOT EXISTS paciente (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                nome TEXT NOT NULL,
-                cpf TEXT,
-                data_nascimento TEXT,
-                telefone TEXT,
-                endereco TEXT,
-                historico_geral TEXT
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    nome TEXT NOT NULL,
+                    cpf TEXT,
+                    data_nascimento TEXT,
+                    telefone TEXT,
+                    endereco TEXT,
+                    historico_geral TEXT
                 );
                 """;
+
         try (Connection conn = ConexaoFactory.getConnection();
              Statement stmt = conn.createStatement()) {
 
@@ -37,8 +38,9 @@ public class PacienteDao {
         }
     }
 
+    // 2. CADASTRA O PACIENTE
     public void cadastrar(Paciente p) {
-        String sql = "INSERT INTO paciente (nome, cpf, data_nascimento, telefone, endereco, historico_geral) VALUES (?,?,?,?,?,?)";
+        String sql = "INSERT INTO paciente (nome, cpf, data_nascimento, telefone, endereco, historico_geral) VALUES (?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = ConexaoFactory.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -50,11 +52,17 @@ public class PacienteDao {
             ps.setString(5, p.getEndereco());
             ps.setString(6, p.getHistoricoGeral());
 
+            ps.execute();
+            System.out.println("✅ SUCESSO: Paciente " + p.getNome() + " salvo no banco!");
+
         } catch (SQLException e) {
-            throw new RuntimeException("Erro ao cadastrar paciente: " + e.getMessage());
+            // AQUI ESTÁ O SEGREDO: Se der erro, ele GRITA no console em vermelho
+            e.printStackTrace();
+            throw new RuntimeException("❌ ERRO AO CADASTRAR: " + e.getMessage());
         }
     }
 
+    // 3. LISTA OS PACIENTES
     public List<Paciente> listarTodos() {
         String sql = "SELECT * FROM paciente";
         List<Paciente> pacientes = new ArrayList<>();
@@ -63,19 +71,16 @@ public class PacienteDao {
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
-            // Enquanto tiver uma próxima linha na tabela do banco...
             while (rs.next()) {
                 Paciente p = new Paciente();
-                // Pegamos os dados da coluna e colocamos no objeto
                 p.setId(rs.getLong("id"));
                 p.setNome(rs.getString("nome"));
                 p.setCpf(rs.getString("cpf"));
-                p.setTelefone(rs.getString("telefone"));
                 p.setData_nascimento(rs.getString("data_nascimento"));
+                p.setTelefone(rs.getString("telefone"));
                 p.setEndereco(rs.getString("endereco"));
                 p.setHistoricoGeral(rs.getString("historico_geral"));
 
-                // Adiciona na lista
                 pacientes.add(p);
             }
 

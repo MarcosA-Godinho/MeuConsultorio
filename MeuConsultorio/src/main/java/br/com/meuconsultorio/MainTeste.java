@@ -9,6 +9,8 @@ public class MainTeste {
 
         PacienteDao dao = new PacienteDao();
 
+        dao.criarTabela();
+
         // ---------------------------------------------
         // PARTE 1: CADASTRAR (Inserir no Banco)
         // ---------------------------------------------
