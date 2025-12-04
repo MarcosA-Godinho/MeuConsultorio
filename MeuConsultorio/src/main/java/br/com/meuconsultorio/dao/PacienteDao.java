@@ -90,4 +90,29 @@ public class PacienteDao {
 
         return pacientes;
     }
+
+    // 4. ATUALIZAR DADOS (Salvar edições)
+    public void atualizar(Paciente p) {
+        String sql = "UPDATE paciente SET nome=?, cpf=?, telefone=?, data_nascimento=?, endereco=?, historico_geral=? WHERE id=?";
+
+        try (Connection conn = ConexaoFactory.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, p.getNome());
+            ps.setString(2, p.getCpf());
+            ps.setString(3, p.getData_nascimento());
+            ps.setString(4, p.getTelefone());
+            ps.setString(5, p.getEndereco());
+            ps.setString(6, p.getHistoricoGeral());
+            // O ID é o critério (WHERE), então é o último parametro (7)
+            ps.setLong(7, p.getId());
+
+            ps.execute();
+            System.out.println("✅ SUCESSO: Paciente atualizado!");
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Erro ao atualizar paciente: " + e.getMessage());
+        }
+    }
 }
