@@ -9,7 +9,7 @@ public class TelaPrincipal extends JFrame {
     public TelaPrincipal() {
         // 1. CONFIGURAÇÕES DA JANELA PRINCIPAL
         setTitle("Meu Consultório - Sistema de Gestão");
-        setSize(800, 600); // Uma tela bem maior
+        setSize(1000, 800); // Uma tela bem maior
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(null);
@@ -22,6 +22,14 @@ public class TelaPrincipal extends JFrame {
         JMenu menuCadastros = new JMenu("Cadastros");
         barraMenu.add(menuCadastros);
 
+        // --- Menu Agenda (NOVO!) ---
+        JMenu menuAgenda = new JMenu("Agenda");
+        barraMenu.add(menuAgenda);
+
+
+        JMenuItem itemAgendaDiaria = new JMenuItem("Agenda Diária");
+        menuAgenda.add(itemAgendaDiaria);
+
         // Item 1: Novo Paciente
         JMenuItem itemNovo = new JMenuItem("Novo Paciente");
         menuCadastros.add(itemNovo);
@@ -29,10 +37,6 @@ public class TelaPrincipal extends JFrame {
         // Item 2: Listar Pacientes (NOVO!)
         JMenuItem itemLista = new JMenuItem("Listar Pacientes");
         menuCadastros.add(itemLista);
-
-        // Item: Pacientes
-        //JMenuItem itemPaciente = new JMenuItem("Pacientes");
-        //menuCadastros.add(itemPaciente);
 
         // --- Menu Sair ---
         JMenu menuOpcoes = new JMenu("Opções");
@@ -69,6 +73,11 @@ public class TelaPrincipal extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 System.exit(0);
             }
+        });
+
+        // Ação: Agenda diaria
+        itemAgendaDiaria.addActionListener(e -> {
+            new TelaAgendaDiaria().setVisible(true);
         });
     }
 }

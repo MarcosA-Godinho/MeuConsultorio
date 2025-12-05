@@ -5,11 +5,14 @@ import br.com.meuconsultorio.model.Paciente;
 import br.com.meuconsultorio.model.Sessao;
 
 import javax.swing.*;
+import javax.swing.text.MaskFormatter;
+import java.text.ParseException;
 
 public class TelaAgendamento extends JFrame {
 
-    private JTextField txtData;
-    private JTextField txtHora;
+    // MUDANÇA 1: Agora são JFormattedTextField (Campos Formatados)
+    private JFormattedTextField txtData;
+    private JFormattedTextField txtHora;
     private Paciente paciente;
 
     public TelaAgendamento(Paciente p) {
@@ -21,22 +24,43 @@ public class TelaAgendamento extends JFrame {
         setLocationRelativeTo(null);
         setLayout(null);
 
-        JLabel lblData = new JLabel("Data (dd/MM/yyyy):");
+        // --- CONFIGURANDO O CAMPO DATA ---
+        JLabel lblData = new JLabel("Data:");
         lblData.setBounds(20, 20, 200, 20);
         add(lblData);
 
-        txtData = new JTextField();
-        txtData.setBounds(20, 45, 240, 25);
+        try {
+            // Cria a máscara: ## = número obrigatório
+            MaskFormatter mascaraData = new MaskFormatter("##/##/####");
+            mascaraData.setPlaceholderCharacter('_'); // Mostra _ onde falta digitar
+
+            txtData = new JFormattedTextField(mascaraData);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        txtData.setBounds(20, 45, 100, 25); // Diminuí a largura pois data é curta
         add(txtData);
 
-        JLabel lblHora = new JLabel("Hora (HH:mm):");
+        // --- CONFIGURANDO O CAMPO HORA ---
+        JLabel lblHora = new JLabel("Hora:");
         lblHora.setBounds(20, 80, 200, 20);
         add(lblHora);
 
-        txtHora = new JTextField();
-        txtHora.setBounds(20, 105, 100, 25);
+        try {
+            // Cria a máscara de hora HH:mm
+            MaskFormatter mascaraHora = new MaskFormatter("##:##");
+            mascaraHora.setPlaceholderCharacter('_');
+
+            txtHora = new JFormattedTextField(mascaraHora);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        txtHora.setBounds(20, 105, 60, 25);
         add(txtHora);
 
+        // --- BOTÃO SALVAR ---
         JButton btnSalvar = new JButton("Confirmar Agendamento");
         btnSalvar.setBounds(20, 150, 240, 40);
         add(btnSalvar);
@@ -45,20 +69,37 @@ public class TelaAgendamento extends JFrame {
     }
 
     private void salvar() {
+        // MUDANÇA 2: Validação
+        // O metodo getText() agora retorna algo como "  /  /    " se estiver vazio
+        // Precisamos limpar os caracteres da máscara para checar se tem números
+
+        String dataDigitada = txtData.getText();
+        String horaDigitada = txtHora.getText();
+
+        // Verifica se a data é válida (grosseiramente)
+        // Se a pessoa não digitou nada, vai estar "__/__/____"
+        if (dataDigitada.contains("_")) {
+            JOptionPane.showMessageDialog(this, "Erro: Digite a DATA completa!");
+            return;
+        }
+
+        if (horaDigitada.contains("_")) {
+            JOptionPane.showMessageDialog(this, "Erro: Digite a HORA completa!");
+            return;
+        }
+
         Sessao s = new Sessao();
-        s.setIdPaciente(paciente.getId()); // O VÍNCULO IMPORTANTE!
-        s.setData(txtData.getText());
-        s.setHora(txtHora.getText());
+        s.setIdPaciente(paciente.getId());
+        s.setData(dataDigitada);
+        s.setHora(horaDigitada);
 
         try {
             SessaoDao dao = new SessaoDao();
-            // IMPORTANTE: Garantir que a tabela existe antes de agendar
             dao.criarTabela();
-
             dao.agendar(s);
 
             JOptionPane.showMessageDialog(this, "Agendado com sucesso!");
-            dispose(); // Fecha a janelinha
+            dispose();
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Erro: " + ex.getMessage());
         }

@@ -42,23 +42,22 @@ public class TelaListaPacientes extends JFrame {
         btnRecarregar.setBounds(230, 390, 150, 40);
         add(btnRecarregar);
 
+        //4. BOTÃO AGENDAR SESSÃO
+        JButton btnAgendar = new JButton("Agendar Sessão");
+        btnAgendar.setBounds(390, 390, 170, 40); // Ajustei o X para ficar ao lado
+        add(btnAgendar);
+
         // AÇÃO DO BOTÃO ABRIR
-        btnAbrir.addActionListener(e -> {
-            // Verifica qual linha está selecionada
-            int linhaSelecionada = tabela.getSelectedRow();
-
-            if (linhaSelecionada == -1) {
-                JOptionPane.showMessageDialog(this, "Selecione um paciente na tabela primeiro!");
+        btnAgendar.addActionListener(e -> {
+            int linha = tabela.getSelectedRow();
+            if (linha == -1) {
+                JOptionPane.showMessageDialog(this, "Selecione um paciente!");
             } else {
-                // Pega o Paciente da lista que está na memória (usando o índice da linha)
-                Paciente p = listaPacientes.get(linhaSelecionada);
+                // Pega o paciente da lista usando a linha selecionada
+                Paciente p = listaPacientes.get(linha);
 
-                // Abre a tela de prontuário passando esse paciente
-                TelaProntuario tela = new TelaProntuario(p);
-                tela.setVisible(true);
-
-                
-
+                // Abre a tela de agendamento
+                new TelaAgendamento(p).setVisible(true);
             }
         });
 
