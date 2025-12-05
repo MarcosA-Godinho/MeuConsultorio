@@ -3,6 +3,8 @@ package br.com.meuconsultorio.view;
 import br.com.meuconsultorio.dao.SessaoDao;
 import br.com.meuconsultorio.model.Paciente;
 import br.com.meuconsultorio.model.Sessao;
+import br.com.meuconsultorio.util.ValidadorData;
+import br.com.meuconsultorio.util.ValidadorHora;
 
 import javax.swing.*;
 import javax.swing.text.MaskFormatter;
@@ -82,9 +84,19 @@ public class TelaAgendamento extends JFrame {
             JOptionPane.showMessageDialog(this, "Erro: Digite a DATA completa!");
             return;
         }
+        //VALIDAR SE A DATA É VERDADEIRA
+        if (!ValidadorData.isDataValida(dataDigitada)) {
+            JOptionPane.showMessageDialog(this, "Erro: Data inexistente! Verifique dia e mês.");
+            return;
+        }
 
         if (horaDigitada.contains("_")) {
             JOptionPane.showMessageDialog(this, "Erro: Digite a HORA completa!");
+            return;
+        }
+        //VALIDADOR SE O HORARIO DIGITADO É VERDADEIRO
+        if (!ValidadorHora.isHoraValida(horaDigitada)) {
+            JOptionPane.showMessageDialog(this, "Erro: Hora inválida! Use formato HH:mm (00:00 a 23:59).");
             return;
         }
 

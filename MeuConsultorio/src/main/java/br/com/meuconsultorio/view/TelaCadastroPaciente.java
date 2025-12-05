@@ -2,6 +2,7 @@ package br.com.meuconsultorio.view;
 
 import br.com.meuconsultorio.dao.PacienteDao;
 import br.com.meuconsultorio.model.Paciente;
+import br.com.meuconsultorio.util.ValidadorCpf; // <--- Não esqueça desse import!
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -9,32 +10,28 @@ import java.awt.event.ActionListener;
 
 public class TelaCadastroPaciente extends JFrame {
 
-    //COMPONENTES DA TELA (CAMPOS DE TEXTO E BOTÃO)
     private JTextField txtNome;
     private JTextField txtCpf;
     private JTextField txtTelefone;
     private JButton btnSalvar;
 
     public TelaCadastroPaciente() {
+        setTitle("Meu Consultório - Cadastro");
+        setSize(400, 300);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); // Fecha só a janela
+        setLayout(null);
+        setLocationRelativeTo(null);
 
-        //1°CONFIGURAÇÃO DA JANELA
-        setTitle("Meu Consultorio - Cadastro");
-        setSize(400, 300); //TAMANHO: LARGURA 400, ALTURA 300
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);//FECHA O PROGRAMA AO FECHAR A JANELA
-        setLayout(null);//LAYOUT MANUAL (VAMOS DEFINIR O X E Y DE CADA COISA
-        setLocationRelativeTo(null);//CENTRALZIA A JANELA NA TELA
-
-        //2°CRIANDO OS COMPONENTES
-        //----CAMPO NOME----
+        // --- NOME ---
         JLabel lblNome = new JLabel("Nome Completo:");
-        lblNome.setBounds(20, 20, 150, 20); //X, Y , largura, altura
+        lblNome.setBounds(20, 20, 150, 20);
         add(lblNome);
 
         txtNome = new JTextField();
         txtNome.setBounds(20, 45, 340, 25);
         add(txtNome);
 
-        // --- Campo CPF ---
+        // --- CPF ---
         JLabel lblCpf = new JLabel("CPF:");
         lblCpf.setBounds(20, 80, 100, 20);
         add(lblCpf);
@@ -43,7 +40,7 @@ public class TelaCadastroPaciente extends JFrame {
         txtCpf.setBounds(20, 105, 150, 25);
         add(txtCpf);
 
-        // --- Campo TELEFONE ---
+        // --- TELEFONE ---
         JLabel lblTel = new JLabel("Telefone:");
         lblTel.setBounds(190, 80, 100, 20);
         add(lblTel);
@@ -52,12 +49,11 @@ public class TelaCadastroPaciente extends JFrame {
         txtTelefone.setBounds(190, 105, 170, 25);
         add(txtTelefone);
 
-        // --- BOTÃO SALVAR ---
+        // --- BOTÃO ---
         btnSalvar = new JButton("Salvar Paciente");
-        btnSalvar.setBounds(20, 160, 340, 40); // Botão grandão
+        btnSalvar.setBounds(20, 160, 340, 40);
         add(btnSalvar);
 
-        // 3. AÇÃO DO BOTÃO (O CÉREBRO DA TELA)
         btnSalvar.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -66,35 +62,36 @@ public class TelaCadastroPaciente extends JFrame {
         });
     }
 
-    // Metodo que pega os dados da tela e manda pro DAO
     private void salvarNoBanco() {
-        // Pega o texto que a pessoa digitou
         String nome = txtNome.getText();
         String cpf = txtCpf.getText();
         String telefone = txtTelefone.getText();
 
-        // Validação simples: Nome é obrigatório
+        // Validação 1: Nome
         if (nome.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Erro: O nome é obrigatório!");
-            return; // Para o código aqui
+            return;
         }
 
-        // Cria o objeto Paciente
+        // Validação 2: CPF (Item 1 da sua lista)
+        // O return tem que estar DENTRO do if
+        if (!ValidadorCpf.isCPF(cpf)) {
+            JOptionPane.showMessageDialog(this, "Erro: CPF inválido!");
+            return;
+        }
+
+        // Se passou pelos returns acima, o código chega aqui (agora é alcançável!)
         Paciente p = new Paciente();
         p.setNome(nome);
         p.setCpf(cpf);
         p.setTelefone(telefone);
-        // Obs: Como não colocamos campos para Endereço/Data na tela ainda,
-        // eles irão vazios (null) para o banco. Tudo bem por enquanto!
 
-        // Tenta salvar usando o DAO
         try {
             PacienteDao dao = new PacienteDao();
             dao.cadastrar(p);
 
             JOptionPane.showMessageDialog(this, "Sucesso! Paciente cadastrado.");
 
-            // Limpa os campos para digitar o próximo
             txtNome.setText("");
             txtCpf.setText("");
             txtTelefone.setText("");
@@ -104,4 +101,3 @@ public class TelaCadastroPaciente extends JFrame {
         }
     }
 }
-

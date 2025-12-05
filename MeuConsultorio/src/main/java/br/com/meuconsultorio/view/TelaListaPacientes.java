@@ -12,23 +12,33 @@ public class TelaListaPacientes extends JFrame {
     private JTable tabela;
     private DefaultTableModel modelo;
     private List<Paciente> listaPacientes;
+    private JTextField txtBusca; // Campo novo
 
     public TelaListaPacientes() {
         setTitle("Lista de Pacientes");
-        setSize(650, 500);
+        setSize(650, 550); // Aumentei um pouco a altura
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(null);
 
-        // 1. CONFIGURAÇÃO DA TABELA (TRAVADA)
-        // Aqui está o segredo para não deixar editar na grade:
+        // --- ÁREA DE BUSCA (NOVO) ---
+        JLabel lblBusca = new JLabel("Buscar por Nome:");
+        lblBusca.setBounds(20, 20, 120, 25);
+        add(lblBusca);
+
+        txtBusca = new JTextField();
+        txtBusca.setBounds(130, 20, 300, 25);
+        add(txtBusca);
+
+        JButton btnBuscar = new JButton("Buscar");
+        btnBuscar.setBounds(440, 20, 100, 25);
+        add(btnBuscar);
+
+        // --- TABELA ---
         modelo = new DefaultTableModel() {
             @Override
-            public boolean isCellEditable(int row, int column) {
-                return false; // <--- TRAVA A EDIÇÃO
-            }
+            public boolean isCellEditable(int row, int column) { return false; }
         };
-
         modelo.addColumn("ID");
         modelo.addColumn("Nome");
         modelo.addColumn("CPF");
@@ -36,65 +46,84 @@ public class TelaListaPacientes extends JFrame {
 
         tabela = new JTable(modelo);
         JScrollPane painelRolagem = new JScrollPane(tabela);
-        painelRolagem.setBounds(20, 20, 590, 350);
+        painelRolagem.setBounds(20, 60, 590, 350); // Desci um pouco o Y
         add(painelRolagem);
 
-        // 2. BOTÕES
-        JButton btnAbrir = new JButton("Abrir Prontuário");
-        btnAbrir.setBounds(20, 390, 150, 40);
+        // --- BOTÕES DE AÇÃO (Rodapé) ---
+        JButton btnAbrir = new JButton("Abrir Perfil / Editar");
+        btnAbrir.setBounds(20, 430, 180, 40);
         add(btnAbrir);
 
-        JButton btnRecarregar = new JButton("Recarregar");
-        btnRecarregar.setBounds(180, 390, 130, 40);
-        add(btnRecarregar);
-
         JButton btnAgendar = new JButton("Agendar Sessão");
-        btnAgendar.setBounds(320, 390, 150, 40);
+        btnAgendar.setBounds(210, 430, 150, 40);
         add(btnAgendar);
 
-        // 3. AÇÕES
+        JButton btnRecarregar = new JButton("Limpar Filtro");
+        btnRecarregar.setBounds(370, 430, 150, 40);
+        add(btnRecarregar);
+
+
+        // --- AÇÕES ---
+
+        // Ação Buscar (Item 2)
+        btnBuscar.addActionListener(e -> pesquisar());
+
+        // Ação Limpar (Volta a mostrar tudo)
+        btnRecarregar.addActionListener(e -> {
+            txtBusca.setText("");
+            carregarDados(""); // Busca vazia = Trazer todos
+        });
+
+        // Ação Perfil (Itens 3, 4, 5 - Preparação)
         btnAbrir.addActionListener(e -> {
             int linha = tabela.getSelectedRow();
             if (linha == -1) {
-                JOptionPane.showMessageDialog(this, "Selecione um paciente na tabela!");
-            } else {
-                Paciente p = listaPacientes.get(linha);
-                new TelaProntuario(p).setVisible(true);
+                JOptionPane.showMessageDialog(this, "Selecione um paciente!");
+                return;
             }
+            Paciente p = listaPacientes.get(linha);
+
+            // AQUI VAMOS CHAMAR A NOVA TELA DE PERFIL NA PRÓXIMA ETAPA
+            // Por enquanto, deixe chamando o Prontuário antigo ou um aviso
+            new TelaPerfilPaciente(p).setVisible(true);
         });
 
-        btnRecarregar.addActionListener(e -> carregarDados());
-
+        // Ação Agendar
         btnAgendar.addActionListener(e -> {
             int linha = tabela.getSelectedRow();
             if (linha == -1) {
-                JOptionPane.showMessageDialog(this, "Selecione um paciente para agendar!");
-            } else {
-                Paciente p = listaPacientes.get(linha);
-                new TelaAgendamento(p).setVisible(true);
+                JOptionPane.showMessageDialog(this, "Selecione um paciente!");
+                return;
             }
+            Paciente p = listaPacientes.get(linha);
+            new TelaAgendamento(p).setVisible(true);
         });
 
-        carregarDados();
+        // Carrega tudo ao iniciar
+        carregarDados("");
     }
 
-    private void carregarDados() {
+    private void pesquisar() {
+        String nome = txtBusca.getText();
+        carregarDados(nome);
+    }
+
+    private void carregarDados(String filtroNome) {
         try {
             PacienteDao dao = new PacienteDao();
-            listaPacientes = dao.listarTodos();
+
+            if (filtroNome.isEmpty()) {
+                listaPacientes = dao.listarTodos(); // Traz tudo
+            } else {
+                listaPacientes = dao.listarPorNome(filtroNome); // Traz só o filtro
+            }
 
             modelo.setRowCount(0);
-
             for (Paciente p : listaPacientes) {
-                modelo.addRow(new Object[]{
-                        p.getId(),
-                        p.getNome(),
-                        p.getCpf(),
-                        p.getTelefone()
-                });
+                modelo.addRow(new Object[]{ p.getId(), p.getNome(), p.getCpf(), p.getTelefone() });
             }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Erro ao carregar lista: " + e.getMessage());
+            JOptionPane.showMessageDialog(this, "Erro: " + e.getMessage());
         }
     }
 }

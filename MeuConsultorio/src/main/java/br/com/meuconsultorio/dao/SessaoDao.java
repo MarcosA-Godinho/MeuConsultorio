@@ -94,4 +94,33 @@ public class SessaoDao {
         }
         return lista;
     }
+
+    // LISTAR POR PACIENTE (Histórico Completo dele)
+    public List<Sessao> listarPorPaciente(Long idPaciente) {
+        String sql = "SELECT * FROM sessao WHERE id_paciente = ? ORDER BY data DESC, hora DESC";
+        List<Sessao> lista = new ArrayList<>();
+
+        try (Connection conn = ConexaoFactory.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setLong(1, idPaciente);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                Sessao s = new Sessao();
+                s.setId(rs.getLong("id"));
+                s.setIdPaciente(rs.getLong("id_paciente"));
+                s.setData(rs.getString("data"));
+                s.setHora(rs.getString("hora"));
+                s.setStatus(rs.getString("status"));
+                s.setObservacao(rs.getString("observacao"));
+                // Não precisamos do nome do paciente aqui, pois já sabemos quem é
+                lista.add(s);
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erro ao buscar histórico: " + e.getMessage());
+        }
+        return lista;
+    }
 }

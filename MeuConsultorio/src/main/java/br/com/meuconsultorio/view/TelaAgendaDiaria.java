@@ -1,11 +1,14 @@
 package br.com.meuconsultorio.view;
 
+import br.com.meuconsultorio.dao.PacienteDao;
 import br.com.meuconsultorio.dao.SessaoDao;
+import br.com.meuconsultorio.model.Paciente;
 import br.com.meuconsultorio.model.Sessao;
+import br.com.meuconsultorio.util.ValidadorData;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.text.MaskFormatter; // Importante para a máscara funcionar
+import javax.swing.text.MaskFormatter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -14,21 +17,21 @@ public class TelaAgendaDiaria extends JFrame {
 
     private JTable tabela;
     private DefaultTableModel modelo;
-    private JFormattedTextField txtData; // Agora é campo formatado
+    private JFormattedTextField txtData;
+    private List<Sessao> listaSessoes; // Guarda os objetos da agenda na memória
 
     public TelaAgendaDiaria() {
         setTitle("Agenda Diária");
-        setSize(600, 500);
+        setSize(650, 500);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(null);
 
-        // 1. FILTRO DE DATA
-        JLabel lblData = new JLabel("Data (dd/MM/yyyy):");
-        lblData.setBounds(20, 20, 150, 20);
+        // 1. FILTROS
+        JLabel lblData = new JLabel("Data:");
+        lblData.setBounds(20, 20, 100, 20);
         add(lblData);
 
-        // --- MÁSCARA NOVA (Aula 10) ---
         try {
             MaskFormatter mascaraData = new MaskFormatter("##/##/####");
             mascaraData.setPlaceholderCharacter('_');
@@ -37,20 +40,24 @@ public class TelaAgendaDiaria extends JFrame {
             e.printStackTrace();
         }
 
-        // Preenche com a data de hoje
+        // Data de hoje automática
         String hoje = new SimpleDateFormat("dd/MM/yyyy").format(new Date());
         txtData.setText(hoje);
-
-        txtData.setBounds(20, 45, 120, 25);
+        txtData.setBounds(20, 45, 100, 25);
         add(txtData);
 
-        // --- BOTÃO FILTRAR (O que estava faltando) ---
-        JButton btnFiltrar = new JButton("Filtrar / Atualizar");
-        btnFiltrar.setBounds(160, 45, 150, 25);
+        JButton btnFiltrar = new JButton("Filtrar");
+        btnFiltrar.setBounds(130, 45, 100, 25);
         add(btnFiltrar);
 
-        // 2. TABELA
-        modelo = new DefaultTableModel();
+        // 2. TABELA TRAVADA
+        modelo = new DefaultTableModel() {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false; // Ninguém mexe aqui!
+            }
+        };
+
         modelo.addColumn("Hora");
         modelo.addColumn("Paciente");
         modelo.addColumn("Status");
@@ -58,35 +65,70 @@ public class TelaAgendaDiaria extends JFrame {
 
         tabela = new JTable(modelo);
         JScrollPane scroll = new JScrollPane(tabela);
-        scroll.setBounds(20, 90, 540, 350);
+        scroll.setBounds(20, 90, 590, 300);
         add(scroll);
 
-        // AÇÃO DO BOTÃO
+        // 3. BOTÃO MÁGICO (Abrir Prontuário)
+        JButton btnAbrirProntuario = new JButton("Abrir Prontuário do Paciente");
+        btnAbrirProntuario.setBounds(20, 400, 250, 40);
+        add(btnAbrirProntuario);
+
+        // --- AÇÕES ---
+
+        // Botão Filtrar
         btnFiltrar.addActionListener(e -> carregarAgenda());
 
-        // Carrega automaticamente ao abrir
+        // Botão Abrir Prontuário
+        btnAbrirProntuario.addActionListener(e -> {
+            int linha = tabela.getSelectedRow();
+            if (linha == -1) {
+                JOptionPane.showMessageDialog(this, "Selecione um horário na tabela!");
+                return;
+            }
+
+            // 1. Descobre qual é a SESSÃO selecionada
+            Sessao sessaoSelecionada = listaSessoes.get(linha);
+
+            // 2. Descobre qual é o ID do paciente dessa sessão
+            Long idPaciente = sessaoSelecionada.getIdPaciente();
+
+            // 3. Busca o paciente completo no banco (Usando o método novo do Passo 1)
+            PacienteDao pacienteDao = new PacienteDao();
+            Paciente p = pacienteDao.buscarPorId(idPaciente);
+
+            // 4. Abre a tela
+            if (p != null) {
+                new TelaProntuario(p).setVisible(true);
+            } else {
+                JOptionPane.showMessageDialog(this, "Erro: Paciente não encontrado!");
+            }
+        });
+
+        // Carrega ao iniciar
         carregarAgenda();
     }
 
     private void carregarAgenda() {
         String dataBuscada = txtData.getText();
+        if (dataBuscada.contains("_")) return;
 
-        // Se a data estiver incompleta (tiver _), não busca nada para não dar erro
-        if (dataBuscada.contains("_")) {
+        if (!ValidadorData.isDataValida(dataBuscada)) {
+            JOptionPane.showMessageDialog(this, "Data inválida!");
             return;
         }
 
         try {
             SessaoDao dao = new SessaoDao();
-            List<Sessao> lista = dao.listarPorData(dataBuscada);
+            // Guarda na variável da classe para usarmos no botão de Prontuário
+            listaSessoes = dao.listarPorData(dataBuscada);
 
             modelo.setRowCount(0);
 
-            if (lista.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Nenhum agendamento para esta data.");
+            if (listaSessoes.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Agenda vazia para esta data.");
             }
 
-            for (Sessao s : lista) {
+            for (Sessao s : listaSessoes) {
                 modelo.addRow(new Object[]{
                         s.getHora(),
                         s.getNomePaciente(),
@@ -96,7 +138,7 @@ public class TelaAgendaDiaria extends JFrame {
             }
 
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Erro ao buscar agenda: " + e.getMessage());
+            JOptionPane.showMessageDialog(this, "Erro: " + e.getMessage());
         }
     }
 }

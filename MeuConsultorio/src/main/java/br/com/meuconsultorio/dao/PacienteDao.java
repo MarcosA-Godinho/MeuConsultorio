@@ -115,4 +115,74 @@ public class PacienteDao {
             throw new RuntimeException("Erro ao atualizar paciente: " + e.getMessage());
         }
     }
+
+    // 5. BUSCAR POR ID (Novo!)
+    public Paciente buscarPorId(Long id) {
+        String sql = "SELECT * FROM paciente WHERE id = ?";
+
+        try (Connection conn = ConexaoFactory.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setLong(1, id);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                Paciente p = new Paciente();
+                p.setId(rs.getLong("id"));
+                p.setNome(rs.getString("nome"));
+                p.setCpf(rs.getString("cpf"));
+                p.setData_nascimento(rs.getString("data_nascimento"));
+                p.setTelefone(rs.getString("telefone"));
+                p.setEndereco(rs.getString("endereco"));
+                p.setHistoricoGeral(rs.getString("historico_geral"));
+                return p;
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null; // Se não achar ninguem
+    }
+
+    // Metodo Novo: Buscar por Nome (Filtro)
+    public List<Paciente> listarPorNome(String parteNome) {
+        // O operador LIKE %texto% busca qualquer coisa que contenha o texto
+        String sql = "SELECT * FROM paciente WHERE nome LIKE ?";
+        List<Paciente> lista = new ArrayList<>();
+
+        try (Connection conn = ConexaoFactory.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, "%" + parteNome + "%"); // Adiciona os coringas %
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                Paciente p = new Paciente();
+                p.setId(rs.getLong("id"));
+                p.setNome(rs.getString("nome"));
+                p.setCpf(rs.getString("cpf"));
+                p.setTelefone(rs.getString("telefone"));
+                // ... preencha os outros campos se precisar ...
+                lista.add(p);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return lista;
+    }
+    // 6. EXCLUIR PACIENTE
+    public void excluir(Long id) {
+        String sql = "DELETE FROM paciente WHERE id = ?";
+
+        try (Connection conn = ConexaoFactory.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setLong(1, id);
+            ps.execute();
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erro ao excluir paciente: " + e.getMessage());
+        }
+    }
+
 }
