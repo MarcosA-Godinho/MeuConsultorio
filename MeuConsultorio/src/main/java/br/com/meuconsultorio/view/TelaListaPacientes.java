@@ -11,17 +11,24 @@ public class TelaListaPacientes extends JFrame {
 
     private JTable tabela;
     private DefaultTableModel modelo;
-    private List<Paciente> listaPacientes; // Guardamos a lista original aqui
+    private List<Paciente> listaPacientes;
 
     public TelaListaPacientes() {
         setTitle("Lista de Pacientes");
-        setSize(600, 500); // Aumentei um pouco a altura
+        setSize(650, 500);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(null);
 
-        // 1. TABELA
-        modelo = new DefaultTableModel();
+        // 1. CONFIGURAÇÃO DA TABELA (TRAVADA)
+        // Aqui está o segredo para não deixar editar na grade:
+        modelo = new DefaultTableModel() {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false; // <--- TRAVA A EDIÇÃO
+            }
+        };
+
         modelo.addColumn("ID");
         modelo.addColumn("Nome");
         modelo.addColumn("CPF");
@@ -29,40 +36,44 @@ public class TelaListaPacientes extends JFrame {
 
         tabela = new JTable(modelo);
         JScrollPane painelRolagem = new JScrollPane(tabela);
-        painelRolagem.setBounds(20, 20, 540, 350);
+        painelRolagem.setBounds(20, 20, 590, 350);
         add(painelRolagem);
 
-        // 2. BOTÃO ABRIR PRONTUÁRIO
-        JButton btnAbrir = new JButton("Abrir Prontuário / Editar");
-        btnAbrir.setBounds(20, 390, 200, 40);
+        // 2. BOTÕES
+        JButton btnAbrir = new JButton("Abrir Prontuário");
+        btnAbrir.setBounds(20, 390, 150, 40);
         add(btnAbrir);
 
-        // 3. BOTÃO ATUALIZAR LISTA (Para ver novos cadastros)
-        JButton btnRecarregar = new JButton("Recarregar Lista");
-        btnRecarregar.setBounds(230, 390, 150, 40);
+        JButton btnRecarregar = new JButton("Recarregar");
+        btnRecarregar.setBounds(180, 390, 130, 40);
         add(btnRecarregar);
 
-        //4. BOTÃO AGENDAR SESSÃO
         JButton btnAgendar = new JButton("Agendar Sessão");
-        btnAgendar.setBounds(390, 390, 170, 40); // Ajustei o X para ficar ao lado
+        btnAgendar.setBounds(320, 390, 150, 40);
         add(btnAgendar);
 
-        // AÇÃO DO BOTÃO ABRIR
-        btnAgendar.addActionListener(e -> {
+        // 3. AÇÕES
+        btnAbrir.addActionListener(e -> {
             int linha = tabela.getSelectedRow();
             if (linha == -1) {
-                JOptionPane.showMessageDialog(this, "Selecione um paciente!");
+                JOptionPane.showMessageDialog(this, "Selecione um paciente na tabela!");
             } else {
-                // Pega o paciente da lista usando a linha selecionada
                 Paciente p = listaPacientes.get(linha);
-
-                // Abre a tela de agendamento
-                new TelaAgendamento(p).setVisible(true);
+                new TelaProntuario(p).setVisible(true);
             }
         });
 
-        // AÇÃO DO BOTÃO RECARREGAR
         btnRecarregar.addActionListener(e -> carregarDados());
+
+        btnAgendar.addActionListener(e -> {
+            int linha = tabela.getSelectedRow();
+            if (linha == -1) {
+                JOptionPane.showMessageDialog(this, "Selecione um paciente para agendar!");
+            } else {
+                Paciente p = listaPacientes.get(linha);
+                new TelaAgendamento(p).setVisible(true);
+            }
+        });
 
         carregarDados();
     }
@@ -70,9 +81,8 @@ public class TelaListaPacientes extends JFrame {
     private void carregarDados() {
         try {
             PacienteDao dao = new PacienteDao();
-            listaPacientes = dao.listarTodos(); // Busca e guarda na variavel da classe
+            listaPacientes = dao.listarTodos();
 
-            // Limpa a tabela visual
             modelo.setRowCount(0);
 
             for (Paciente p : listaPacientes) {
@@ -84,7 +94,7 @@ public class TelaListaPacientes extends JFrame {
                 });
             }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Erro: " + e.getMessage());
+            JOptionPane.showMessageDialog(this, "Erro ao carregar lista: " + e.getMessage());
         }
     }
 }

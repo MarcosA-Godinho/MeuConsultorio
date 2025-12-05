@@ -5,7 +5,7 @@ import br.com.meuconsultorio.model.Sessao;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.text.MaskFormatter;
+import javax.swing.text.MaskFormatter; // Importante para a máscara funcionar
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -14,7 +14,7 @@ public class TelaAgendaDiaria extends JFrame {
 
     private JTable tabela;
     private DefaultTableModel modelo;
-    private JFormattedTextField txtData;
+    private JFormattedTextField txtData; // Agora é campo formatado
 
     public TelaAgendaDiaria() {
         setTitle("Agenda Diária");
@@ -23,27 +23,33 @@ public class TelaAgendaDiaria extends JFrame {
         setLocationRelativeTo(null);
         setLayout(null);
 
-        // 1. FILTRO DE DATA (Topo da tela)
+        // 1. FILTRO DE DATA
         JLabel lblData = new JLabel("Data (dd/MM/yyyy):");
         lblData.setBounds(20, 20, 150, 20);
         add(lblData);
 
-        // Já vem preenchido com a data de hoje para facilitar
-        String hoje = new SimpleDateFormat("dd/MM/yyyy").format(new Date());
-
+        // --- MÁSCARA NOVA (Aula 10) ---
         try {
             MaskFormatter mascaraData = new MaskFormatter("##/##/####");
             mascaraData.setPlaceholderCharacter('_');
             txtData = new JFormattedTextField(mascaraData);
-            txtData.setText(hoje); // Aplica a data de hoje na máscara
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        txtData.setBounds(20, 45, 100, 25); // Ajuste a largura se precisar
+        // Preenche com a data de hoje
+        String hoje = new SimpleDateFormat("dd/MM/yyyy").format(new Date());
+        txtData.setText(hoje);
+
+        txtData.setBounds(20, 45, 120, 25);
         add(txtData);
 
-        // 2. A TABELA DE HORÁRIOS
+        // --- BOTÃO FILTRAR (O que estava faltando) ---
+        JButton btnFiltrar = new JButton("Filtrar / Atualizar");
+        btnFiltrar.setBounds(160, 45, 150, 25);
+        add(btnFiltrar);
+
+        // 2. TABELA
         modelo = new DefaultTableModel();
         modelo.addColumn("Hora");
         modelo.addColumn("Paciente");
@@ -55,34 +61,25 @@ public class TelaAgendaDiaria extends JFrame {
         scroll.setBounds(20, 90, 540, 350);
         add(scroll);
 
-        // AÇÃO DO BOTÃO FILTRAR
-        btnFilString hoje = new SimpleDateFormat("dd/MM/yyyy").format(new Date());
+        // AÇÃO DO BOTÃO
+        btnFiltrar.addActionListener(e -> carregarAgenda());
 
-        try {
-            MaskFormatter mascaraData = new MaskFormatter("##/##/####");
-            mascaraData.setPlaceholderCharacter('_');
-            txtData = new JFormattedTextField(mascaraData);
-            txtData.setText(hoje); // Aplica a data de hoje na máscara
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        txtData.setBounds(20, 45, 100, 25); // Ajuste a largura se precisar
-        add(txtData);btnFilString.addActionListener(e -> carregarAgenda());
-
-        // Carrega automaticamente ao abrir a tela
+        // Carrega automaticamente ao abrir
         carregarAgenda();
     }
 
     private void carregarAgenda() {
         String dataBuscada = txtData.getText();
 
+        // Se a data estiver incompleta (tiver _), não busca nada para não dar erro
+        if (dataBuscada.contains("_")) {
+            return;
+        }
+
         try {
             SessaoDao dao = new SessaoDao();
-            // IMPORTANTE: O método listarPorData faz o JOIN para pegar o nome do paciente
             List<Sessao> lista = dao.listarPorData(dataBuscada);
 
-            // Limpa a tabela visual
             modelo.setRowCount(0);
 
             if (lista.isEmpty()) {
@@ -92,7 +89,7 @@ public class TelaAgendaDiaria extends JFrame {
             for (Sessao s : lista) {
                 modelo.addRow(new Object[]{
                         s.getHora(),
-                        s.getNomePaciente(), // <--- Aqui aparece o nome do João, não o ID 1
+                        s.getNomePaciente(),
                         s.getStatus(),
                         s.getObservacao()
                 });
