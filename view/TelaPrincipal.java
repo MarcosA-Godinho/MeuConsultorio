@@ -37,11 +37,11 @@ public class TelaPrincipal extends JFrame {
 
         JMenuItem itemNovo = new JMenuItem("Novo Paciente");
         JMenuItem itemLista = new JMenuItem("Listar Pacientes");
-        // JMenuItem itemConvenios = new JMenuItem("Convênios / Preços"); // AULA 12
+        JMenuItem itemConvenios = new JMenuItem("Convênios / Preços"); // AULA 12
 
         menuCadastros.add(itemNovo);
         menuCadastros.add(itemLista);
-        // menuCadastros.add(itemConvenios);
+        menuCadastros.add(itemConvenios);
 
         // --- Agenda ---
         JMenu menuAgenda = new JMenu("Agenda");
@@ -58,7 +58,7 @@ public class TelaPrincipal extends JFrame {
         // AÇÕES
         itemNovo.addActionListener(e -> new TelaCadastroPaciente().setVisible(true));
         itemLista.addActionListener(e -> new TelaListaPacientes().setVisible(true));
-        // itemConvenios.addActionListener(e -> new TelaConvenios().setVisible(true));
+        itemConvenios.addActionListener(e -> new TelaConvenios().setVisible(true));
         itemAgendaDiaria.addActionListener(e -> new TelaAgendaDiaria().setVisible(true));
         itemSair.addActionListener(e -> System.exit(0));
     }
@@ -92,7 +92,8 @@ public class TelaPrincipal extends JFrame {
         modeloDashboard.addColumn("Data");
         modeloDashboard.addColumn("Hora");
         modeloDashboard.addColumn("Paciente");
-        modeloDashboard.addColumn("Status"); // Adicionei status para visualização
+        modeloDashboard.addColumn("Tipo");
+        modeloDashboard.addColumn("Status");
 
         tabelaDashboard = new JTable(modeloDashboard);
         JScrollPane scroll = new JScrollPane(tabelaDashboard);
@@ -160,7 +161,7 @@ public class TelaPrincipal extends JFrame {
 
             for (Sessao s : listaAtual) {
                 modeloDashboard.addRow(new Object[]{
-                        s.getData(), s.getHora(), s.getNomePaciente(), s.getStatus()
+                        s.getData(), s.getHora(), s.getNomePaciente(), s.getNomeConvenio(),s.getStatus()
                 });
             }
         } catch (Exception e) {

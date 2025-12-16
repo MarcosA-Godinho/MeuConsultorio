@@ -8,6 +8,8 @@ public class Sessao {
     private String hora; // Formato: HH:mm
     private String status; // Ex: "Agendado", "Realizado", "Cancelado"
     private String observacao; // O que aconteceu NESTA sessão específica
+    private Long idConvenio;
+    private String nomeConvenio; // Apenas para mostrar na tela (não salva no banco)
 
     // Getters e Setters
     public Long getId() { return id; }
@@ -30,4 +32,10 @@ public class Sessao {
 
     public String getObservacao() { return observacao; }
     public void setObservacao(String observacao) { this.observacao = observacao; }
+
+    public Long getIdConvenio() { return idConvenio; }
+    public void setIdConvenio(Long idConvenio) { this.idConvenio = idConvenio; }
+
+    public String getNomeConvenio() { return nomeConvenio; }
+    public void setNomeConvenio(String nomeConvenio) { this.nomeConvenio = nomeConvenio; }
 }

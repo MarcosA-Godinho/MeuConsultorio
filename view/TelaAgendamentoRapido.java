@@ -6,6 +6,8 @@ import br.com.meuconsultorio.model.Paciente;
 import br.com.meuconsultorio.model.Sessao;
 import br.com.meuconsultorio.util.ValidadorData;
 import br.com.meuconsultorio.util.ValidadorHora;
+import br.com.meuconsultorio.dao.ConvenioDao; // Importe o DAO
+import br.com.meuconsultorio.model.Convenio; // Importe o Modelo
 
 import javax.swing.*;
 import javax.swing.text.MaskFormatter;
@@ -15,11 +17,12 @@ public class TelaAgendamentoRapido extends JFrame {
 
     private JComboBox<Paciente> cmbPacientes;
     private JFormattedTextField txtData;
+    private JComboBox<Convenio> cmbConvenios;
     private JFormattedTextField txtHora;
 
     public TelaAgendamentoRapido() {
         setTitle("Agendamento Rápido");
-        setSize(400, 350);
+        setSize(400, 420);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(null);
@@ -36,39 +39,58 @@ public class TelaAgendamentoRapido extends JFrame {
         // Carrega os pacientes do banco para o ComboBox
         carregarPacientes();
 
+        JLabel lblConv = new JLabel("Tipo / Convênio:");
+        lblConv.setBounds(20, 80, 200, 20);
+        add(lblConv);
+
+        cmbConvenios = new JComboBox<>();
+        cmbConvenios.setBounds(20, 105, 340, 30);
+        add(cmbConvenios);
+
+        carregarConvenios(); // Chama o método para preencher
+
         // 2. DATA
         JLabel lblData = new JLabel("Data (dd/MM/yyyy):");
-        lblData.setBounds(20, 90, 150, 20);
+        lblData.setBounds(20, 180, 150, 20);
         add(lblData);
 
         try {
             MaskFormatter maskData = new MaskFormatter("##/##/####");
             maskData.setPlaceholderCharacter('_');
             txtData = new JFormattedTextField(maskData);
-            txtData.setBounds(20, 115, 120, 30);
+            txtData.setBounds(20, 150, 120, 30);
             add(txtData);
         } catch (Exception e) { e.printStackTrace(); }
 
         // 3. HORA
         JLabel lblHora = new JLabel("Hora (HH:mm):");
-        lblHora.setBounds(200, 90, 150, 20);
+        lblHora.setBounds(200, 180, 150, 20);
         add(lblHora);
 
         try {
             MaskFormatter maskHora = new MaskFormatter("##:##");
             maskHora.setPlaceholderCharacter('_');
             txtHora = new JFormattedTextField(maskHora);
-            txtHora.setBounds(200, 115, 80, 30);
+            txtHora.setBounds(200, 150, 80, 30);
             add(txtHora);
         } catch (Exception e) { e.printStackTrace(); }
 
         // 4. BOTÃO SALVAR
         JButton btnSalvar = new JButton("Confirmar Agendamento");
-        btnSalvar.setBounds(20, 180, 340, 40);
+        btnSalvar.setBounds(20, 240, 340, 40);
         btnSalvar.setBackground(new java.awt.Color(60, 163, 255)); // Azulzinho
         add(btnSalvar);
 
         btnSalvar.addActionListener(e -> salvar());
+    }
+
+    private void carregarConvenios() {
+        try {
+            List<Convenio> lista = new ConvenioDao().listarTodos();
+            for (Convenio c : lista) {
+                cmbConvenios.addItem(c);
+            }
+        } catch (Exception e) { e.printStackTrace(); }
     }
 
     private void carregarPacientes() {
@@ -85,12 +107,13 @@ public class TelaAgendamentoRapido extends JFrame {
     }
 
     private void salvar() {
-        // Validações
-        Paciente pacienteSelecionado = (Paciente) cmbPacientes.getSelectedItem();
+        // Validações (permanecem iguais)
+        Paciente p = (Paciente) cmbPacientes.getSelectedItem();
+        Convenio c = (Convenio) cmbConvenios.getSelectedItem();
         String data = txtData.getText();
         String hora = txtHora.getText();
 
-        if (pacienteSelecionado == null) {
+        if (p == null) {
             JOptionPane.showMessageDialog(this, "Selecione um paciente!");
             return;
         }
@@ -102,19 +125,32 @@ public class TelaAgendamentoRapido extends JFrame {
             JOptionPane.showMessageDialog(this, "Hora inválida!");
             return;
         }
+        if (c == null) {
+            JOptionPane.showMessageDialog(this, "Selecione um convênio!");
+            return;
+        }
 
-        // Salva no Banco
+        // Prepara o objeto
         Sessao s = new Sessao();
-        s.setIdPaciente(pacienteSelecionado.getId());
+        s.setIdPaciente(p.getId());
+        s.setIdConvenio(c.getId());
         s.setData(data);
         s.setHora(hora);
 
         try {
-            new SessaoDao().agendar(s);
+            SessaoDao dao = new SessaoDao();
+
+            // --- A CORREÇÃO ESTÁ AQUI ---
+            dao.criarTabela(); // Garante que a tabela 'sessao' será criada se não existir
+            // ---------------------------
+
+            dao.agendar(s);
+
             JOptionPane.showMessageDialog(this, "Agendado com sucesso!");
-            dispose(); // Fecha a janela
+            dispose();
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Erro: " + ex.getMessage());
+            JOptionPane.showMessageDialog(this, "Erro ao agendar: " + ex.getMessage());
+            ex.printStackTrace(); // Ajuda a ver o erro no console
         }
     }
 }
